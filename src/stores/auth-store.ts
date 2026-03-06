@@ -7,7 +7,7 @@ import {
   signOut,
 } from 'firebase/auth';
 import {
-  doc, setDoc, getDoc, collection, getDocs, deleteDoc, updateDoc,
+  doc, setDoc, getDoc, collection, getDocs, deleteDoc, updateDoc, deleteField,
 } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { AppUser, UserRole } from '@/lib/types';
@@ -107,9 +107,22 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   updateCurrentUser: async (updates) => {
     const user = get().currentUser;
     if (!user) return;
-    const updated = { ...user, ...updates };
-    await updateDoc(doc(db, 'users', user.id), updates as Record<string, unknown>);
-    set({ currentUser: updated });
+    // Replace undefined values with deleteField() for Firestore
+    const firestoreUpdates: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(updates as Record<string, unknown>)) {
+      firestoreUpdates[key] = value === undefined ? deleteField() : value;
+    }
+    await updateDoc(doc(db, 'users', user.id), firestoreUpdates);
+    // For local state, remove keys that were deleted
+    const localUpdated = { ...user };
+    for (const [key, value] of Object.entries(updates as Record<string, unknown>)) {
+      if (value === undefined) {
+        delete (localUpdated as Record<string, unknown>)[key];
+      } else {
+        (localUpdated as Record<string, unknown>)[key] = value;
+      }
+    }
+    set({ currentUser: localUpdated });
   },
 
   loadAllUsers: async () => {

@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { User, Mail, LogOut, Save, Wallet, Shield, Camera, Send, Phone, Instagram } from 'lucide-react';
+import { User, Mail, LogOut, Save, Wallet, Shield, Camera, Send, Phone, Instagram, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -106,6 +106,14 @@ export default function ProfilePage() {
                 >
                   <Camera className="h-3.5 w-3.5 text-white" />
                 </button>
+                {currentUser.avatar && (
+                  <button
+                    onClick={() => { updateCurrentUser({ avatar: undefined }); toast.success('Аватар удалён'); }}
+                    className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-destructive flex items-center justify-center hover:bg-destructive/80 transition-colors"
+                  >
+                    <Trash2 className="h-3 w-3 text-white" />
+                  </button>
+                )}
                 <input
                   ref={avatarInputRef}
                   type="file"
