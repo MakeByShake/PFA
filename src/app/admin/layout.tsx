@@ -10,12 +10,22 @@ import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const currentUser = useAuthStore((s) => s.currentUser);
+  const isLoading = useAuthStore((s) => s.isLoading);
   const router = useRouter();
 
   useEffect(() => {
+    if (isLoading) return;
     if (!currentUser) { router.replace('/login'); return; }
     if (currentUser.role !== 'admin') { router.replace('/dashboard'); }
-  }, [currentUser, router]);
+  }, [currentUser, isLoading, router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="h-8 w-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   if (!currentUser || currentUser.role !== 'admin') return null;
 

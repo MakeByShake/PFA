@@ -26,8 +26,7 @@ export default function LoginPage() {
       return;
     }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 400));
-    const result = login(email, password);
+    const result = await login(email, password);
     setLoading(false);
     if (result.success) {
       toast.success('Добро пожаловать!');
@@ -96,10 +95,8 @@ export default function LoginPage() {
               </div>
 
               {/* Hint */}
-              <div className="rounded-lg bg-muted p-3 text-xs text-muted-foreground space-y-1">
-                <p className="font-medium text-foreground">Тестовые аккаунты:</p>
-                <p>Админ: admin@pfa.app / admin123</p>
-                <p>Юзер: user@pfa.app / user123</p>
+              <div className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+                <p>Нет аккаунта? <a href="/register" className="text-emerald-400 font-medium">Зарегистрируйтесь</a> — первый пользователь с email <span className="text-foreground">admin@pfa.app</span> автоматически получит права администратора.</p>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-3">

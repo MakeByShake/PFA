@@ -7,9 +7,12 @@ import type { UserRole } from '@/lib/types';
 
 export function useAuthGuard(requiredRole?: UserRole) {
   const currentUser = useAuthStore((s) => s.currentUser);
+  const isLoading = useAuthStore((s) => s.isLoading);
   const router = useRouter();
 
   useEffect(() => {
+    // Wait for Firebase to determine auth state before redirecting
+    if (isLoading) return;
     if (!currentUser) {
       router.replace('/login');
       return;
@@ -17,7 +20,7 @@ export function useAuthGuard(requiredRole?: UserRole) {
     if (requiredRole && currentUser.role !== requiredRole) {
       router.replace('/dashboard');
     }
-  }, [currentUser, requiredRole, router]);
+  }, [currentUser, isLoading, requiredRole, router]);
 
-  return { currentUser, isAdmin: currentUser?.role === 'admin' };
+  return { currentUser, isAdmin: currentUser?.role === 'admin', isLoading };
 }

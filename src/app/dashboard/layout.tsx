@@ -10,13 +10,26 @@ import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const currentUser = useAuthStore((s) => s.currentUser);
+  const isLoading = useAuthStore((s) => s.isLoading);
   const router = useRouter();
 
   useEffect(() => {
-    if (!currentUser) {
+    if (!isLoading && !currentUser) {
       router.replace('/login');
     }
-  }, [currentUser, router]);
+  }, [currentUser, isLoading, router]);
+
+  // Show loading spinner while Firebase checks auth state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
+          <p className="text-sm text-muted-foreground">Загрузка...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentUser) return null;
 

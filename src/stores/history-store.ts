@@ -1,33 +1,36 @@
 'use client';
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
 import { Transaction } from '@/lib/types';
 
 interface HistoryStore {
   transactions: Transaction[];
+  setTransactions: (txs: Transaction[]) => void;
   addTransaction: (data: Omit<Transaction, 'id' | 'createdAt'>) => void;
   deleteTransaction: (id: string) => void;
 }
 
-export const useHistoryStore = create<HistoryStore>()(
-  persist(
-    (set) => ({
-      transactions: [],
+export const useHistoryStore = create<HistoryStore>()((set) => ({
+  transactions: [],
 
-      addTransaction: (data) => {
-        const tx: Transaction = {
-          ...data,
-          id: `tx-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-          createdAt: new Date().toISOString(),
-        };
-        set((s) => ({ transactions: [tx, ...s.transactions] }));
-      },
+  setTransactions: (transactions) => set({ transactions }),
 
-      deleteTransaction: (id) => {
-        set((s) => ({ transactions: s.transactions.filter((t) => t.id !== id) }));
-      },
-    }),
-    { name: 'pfa-history' }
-  )
-);
+  addTransaction: (data) => {
+    const uid = auth.currentUser?.uid;
+    const tx: Transaction = {
+      ...data,
+      id: `tx-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      createdAt: new Date().toISOString(),
+    };
+    set((s) => ({ transactions: [tx, ...s.transactions] }));
+    if (uid) setDoc(doc(db, 'users', uid, 'transactions', tx.id), tx);
+  },
+
+  deleteTransaction: (id) => {
+    const uid = auth.currentUser?.uid;
+    set((s) => ({ transactions: s.transactions.filter((t) => t.id !== id) }));
+    if (uid) deleteDoc(doc(db, 'users', uid, 'transactions', id));
+  },
+}));

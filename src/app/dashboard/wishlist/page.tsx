@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { KanbanColumn } from '@/features/wishlist/components/kanban-column';
@@ -45,8 +45,8 @@ export default function WishlistPage() {
         </div>
 
         {/* Board */}
-        <ScrollArea className="w-full">
-          <div className="flex gap-4 pb-4 min-h-[60vh]" style={{ minWidth: `${sortedColumns.length * 300}px` }}>
+        <ScrollArea className="w-full whitespace-nowrap">
+          <div className="flex gap-4 pb-4 min-h-[60vh]">
             {sortedColumns.map((col) => (
               <KanbanColumn
                 key={col.id}
@@ -56,7 +56,7 @@ export default function WishlistPage() {
               />
             ))}
             {sortedColumns.length === 0 && (
-              <div className="flex-1 flex flex-col items-center justify-center text-center py-16">
+              <div className="flex-1 flex flex-col items-center justify-center text-center py-16 whitespace-normal">
                 <div className="text-6xl mb-4">🛍️</div>
                 <h2 className="text-lg font-semibold text-foreground mb-2">Доска пустая</h2>
                 <p className="text-muted-foreground text-sm mb-4">
@@ -68,6 +68,7 @@ export default function WishlistPage() {
               </div>
             )}
           </div>
+          <ScrollBar orientation="horizontal" />
         </ScrollArea>
       </div>
 

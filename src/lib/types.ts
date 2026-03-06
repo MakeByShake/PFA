@@ -7,10 +7,15 @@ export interface AppUser {
   email: string;
   password: string; // stored hashed in real apps; plaintext for localStorage demo
   role: UserRole;
-  avatar?: string;
+  avatar?: string; // base64 data URL
   currency: string;
   theme: 'dark' | 'light' | 'system';
   createdAt: string;
+  // Social & contact info
+  telegram?: string;
+  whatsapp?: string;
+  instagram?: string;
+  kaspiNumber?: string;
 }
 
 // ─── Wallet ───────────────────────────────────────────────────────────────────
@@ -50,7 +55,8 @@ export interface IncomeSource {
   name: string;
   amount: number;
   category: IncomeCategory;
-  scheduleDay?: number; // day of month
+  scheduleDay?: number; // day of month (legacy)
+  scheduleDate?: string; // ISO date string (preferred)
   receivedThisMonth: boolean;
   createdAt: string;
 }
@@ -60,7 +66,8 @@ export interface ExpenseItem {
   name: string;
   amount: number;
   category: ExpenseCategory;
-  scheduleDay?: number;
+  scheduleDay?: number; // legacy
+  scheduleDate?: string; // ISO date string (preferred)
   paidThisMonth: boolean;
   createdAt: string;
 }

@@ -1,7 +1,8 @@
 'use client';
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
 
 interface WalletStore {
   currentMoney: number;
@@ -10,14 +11,29 @@ interface WalletStore {
   setMoney: (amount: number) => void;
 }
 
-export const useWalletStore = create<WalletStore>()(
-  persist(
-    (set) => ({
-      currentMoney: 0,
-      addMoney: (amount) => set((s) => ({ currentMoney: s.currentMoney + amount })),
-      subtractMoney: (amount) => set((s) => ({ currentMoney: Math.max(0, s.currentMoney - amount) })),
-      setMoney: (amount) => set({ currentMoney: amount }),
-    }),
-    { name: 'pfa-wallet' }
-  )
-);
+function syncWallet(amount: number) {
+  const uid = auth.currentUser?.uid;
+  if (!uid) return;
+  setDoc(doc(db, 'users', uid, 'wallet', 'main'), { currentMoney: amount });
+}
+
+export const useWalletStore = create<WalletStore>()((set, get) => ({
+  currentMoney: 0,
+
+  addMoney: (amount) => {
+    const next = get().currentMoney + amount;
+    set({ currentMoney: next });
+    syncWallet(next);
+  },
+
+  subtractMoney: (amount) => {
+    const next = Math.max(0, get().currentMoney - amount);
+    set({ currentMoney: next });
+    syncWallet(next);
+  },
+
+  setMoney: (amount) => {
+    set({ currentMoney: amount });
+    syncWallet(amount);
+  },
+}));

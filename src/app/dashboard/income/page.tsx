@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Trash2, Check, Zap, TrendingUp, TrendingDown } from 'lucide-react';
+import { Plus, Trash2, Check, Zap, TrendingUp, TrendingDown, ArrowUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,16 @@ import type { IncomeCategory, ExpenseCategory } from '@/lib/types';
 const INCOME_CATEGORIES: IncomeCategory[] = ['стипендия', 'зарплата', 'аренда', 'бизнес', 'подарок', 'другое'];
 const EXPENSE_CATEGORIES: ExpenseCategory[] = ['транспорт', 'еда', 'жилье', 'здоровье', 'развлечения', 'одежда', 'другое'];
 
+function formatScheduleDate(src: { scheduleDate?: string; scheduleDay?: number }): string | null {
+  if (src.scheduleDate) {
+    return new Date(src.scheduleDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  }
+  if (src.scheduleDay) {
+    return `${src.scheduleDay}-го числа`;
+  }
+  return null;
+}
+
 export default function IncomePage() {
   const { incomeSources, expenseItems, addIncomeSource, deleteIncomeSource, markIncomeReceived, addQuickIncome, addExpenseItem, deleteExpenseItem, markExpensePaid, addQuickExpense } = useIncomeStore();
   const currentMoney = useWalletStore((s) => s.currentMoney);
@@ -30,9 +40,9 @@ export default function IncomePage() {
   const [quickExpenseDialog, setQuickExpenseDialog] = useState(false);
 
   // Income form
-  const [iForm, setIForm] = useState({ name: '', amount: '', category: 'зарплата' as IncomeCategory, scheduleDay: '' });
+  const [iForm, setIForm] = useState({ name: '', amount: '', category: 'зарплата' as IncomeCategory, scheduleDate: '' });
   // Expense form
-  const [eForm, setEForm] = useState({ name: '', amount: '', category: 'еда' as ExpenseCategory, scheduleDay: '' });
+  const [eForm, setEForm] = useState({ name: '', amount: '', category: 'еда' as ExpenseCategory, scheduleDate: '' });
   // Quick income
   const [qiForm, setQiForm] = useState({ name: '', amount: '', category: 'другое' as IncomeCategory });
   // Quick expense
@@ -40,19 +50,20 @@ export default function IncomePage() {
 
   const totalIncome = incomeSources.reduce((s, i) => s + i.amount, 0);
   const totalExpense = expenseItems.reduce((s, e) => s + e.amount, 0);
+  const netBalance = totalIncome - totalExpense;
 
   const handleAddIncome = () => {
     if (!iForm.name || !iForm.amount) return;
-    addIncomeSource({ name: iForm.name, amount: Number(iForm.amount), category: iForm.category, scheduleDay: iForm.scheduleDay ? Number(iForm.scheduleDay) : undefined });
-    setIForm({ name: '', amount: '', category: 'зарплата', scheduleDay: '' });
+    addIncomeSource({ name: iForm.name, amount: Number(iForm.amount), category: iForm.category, scheduleDate: iForm.scheduleDate || undefined });
+    setIForm({ name: '', amount: '', category: 'зарплата', scheduleDate: '' });
     setIncomeDialog(false);
     toast.success('Источник дохода добавлен');
   };
 
   const handleAddExpense = () => {
     if (!eForm.name || !eForm.amount) return;
-    addExpenseItem({ name: eForm.name, amount: Number(eForm.amount), category: eForm.category, scheduleDay: eForm.scheduleDay ? Number(eForm.scheduleDay) : undefined });
-    setEForm({ name: '', amount: '', category: 'еда', scheduleDay: '' });
+    addExpenseItem({ name: eForm.name, amount: Number(eForm.amount), category: eForm.category, scheduleDate: eForm.scheduleDate || undefined });
+    setEForm({ name: '', amount: '', category: 'еда', scheduleDate: '' });
     setExpenseDialog(false);
     toast.success('Расход добавлен');
   };
@@ -86,20 +97,32 @@ export default function IncomePage() {
         </div>
 
         {/* Summary cards */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-2 gap-3 mb-3">
           <Card className="border-emerald-500/20 bg-emerald-500/5">
             <CardContent className="p-4">
               <p className="text-xs text-muted-foreground mb-1">Ежемесячные доходы</p>
-              <p className="text-xl font-bold text-emerald-400">{totalIncome.toLocaleString()} {currency}</p>
+              <p className="text-xl font-bold text-emerald-400">+{totalIncome.toLocaleString()} {currency}</p>
             </CardContent>
           </Card>
           <Card className="border-red-500/20 bg-red-500/5">
             <CardContent className="p-4">
               <p className="text-xs text-muted-foreground mb-1">Ежемесячные расходы</p>
-              <p className="text-xl font-bold text-red-400">{totalExpense.toLocaleString()} {currency}</p>
+              <p className="text-xl font-bold text-red-400">-{totalExpense.toLocaleString()} {currency}</p>
             </CardContent>
           </Card>
         </div>
+        {/* Net balance */}
+        <Card className={`mb-6 ${netBalance >= 0 ? 'border-emerald-500/30 bg-emerald-500/8' : 'border-red-500/30 bg-red-500/8'}`}>
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className={`h-4 w-4 ${netBalance >= 0 ? 'text-emerald-400' : 'text-red-400'}`} />
+              <p className="text-sm text-muted-foreground">Итого (доходы − расходы)</p>
+            </div>
+            <p className={`text-xl font-bold ${netBalance >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+              {netBalance >= 0 ? '+' : ''}{netBalance.toLocaleString()} {currency}
+            </p>
+          </CardContent>
+        </Card>
 
         {/* Quick actions */}
         <div className="grid grid-cols-2 gap-3 mb-6">
@@ -129,34 +152,37 @@ export default function IncomePage() {
                 <p>Нет источников дохода</p>
               </div>
             ) : (
-              incomeSources.map((src) => (
-                <Card key={src.id} className={`border ${src.receivedThisMonth ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-border'}`}>
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold text-foreground">{src.name}</p>
-                        <Badge variant="secondary" className="text-xs">{src.category}</Badge>
-                        {src.scheduleDay && <span className="text-xs text-muted-foreground">{src.scheduleDay}-го числа</span>}
+              incomeSources.map((src) => {
+                const scheduleLabel = formatScheduleDate(src);
+                return (
+                  <Card key={src.id} className={`border ${src.receivedThisMonth ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-border'}`}>
+                    <CardContent className="p-4 flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-foreground">{src.name}</p>
+                          <Badge variant="secondary" className="text-xs">{src.category}</Badge>
+                          {scheduleLabel && <span className="text-xs text-muted-foreground">{scheduleLabel}</span>}
+                        </div>
+                        <p className="text-lg font-bold text-emerald-400 mt-0.5">+{src.amount.toLocaleString()} {currency}</p>
                       </div>
-                      <p className="text-lg font-bold text-emerald-400 mt-0.5">+{src.amount.toLocaleString()} {currency}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => { markIncomeReceived(src.id); toast.success(`${src.name}: +${src.amount.toLocaleString()} ${currency} получено`); }}
-                        disabled={src.receivedThisMonth}
-                        className={src.receivedThisMonth ? 'bg-emerald-500/20 text-emerald-400 cursor-default' : 'bg-emerald-500 hover:bg-emerald-600 text-white'}
-                      >
-                        <Check className="h-4 w-4 mr-1" />
-                        {src.receivedThisMonth ? 'Получено' : 'Получить'}
-                      </Button>
-                      <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive h-8 w-8" onClick={() => deleteIncomeSource(src.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => { markIncomeReceived(src.id); toast.success(`${src.name}: +${src.amount.toLocaleString()} ${currency} получено`); }}
+                          disabled={src.receivedThisMonth}
+                          className={src.receivedThisMonth ? 'bg-emerald-500/20 text-emerald-400 cursor-default' : 'bg-emerald-500 hover:bg-emerald-600 text-white'}
+                        >
+                          <Check className="h-4 w-4 mr-1" />
+                          {src.receivedThisMonth ? 'Получено' : 'Получить'}
+                        </Button>
+                        <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive h-8 w-8" onClick={() => deleteIncomeSource(src.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
             )}
           </TabsContent>
 
@@ -172,34 +198,37 @@ export default function IncomePage() {
                 <p>Нет регулярных расходов</p>
               </div>
             ) : (
-              expenseItems.map((exp) => (
-                <Card key={exp.id} className={`border ${exp.paidThisMonth ? 'border-red-500/30 bg-red-500/5' : 'border-border'}`}>
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold text-foreground">{exp.name}</p>
-                        <Badge variant="secondary" className="text-xs">{exp.category}</Badge>
-                        {exp.scheduleDay && <span className="text-xs text-muted-foreground">{exp.scheduleDay}-го числа</span>}
+              expenseItems.map((exp) => {
+                const scheduleLabel = formatScheduleDate(exp);
+                return (
+                  <Card key={exp.id} className={`border ${exp.paidThisMonth ? 'border-red-500/30 bg-red-500/5' : 'border-border'}`}>
+                    <CardContent className="p-4 flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-foreground">{exp.name}</p>
+                          <Badge variant="secondary" className="text-xs">{exp.category}</Badge>
+                          {scheduleLabel && <span className="text-xs text-muted-foreground">{scheduleLabel}</span>}
+                        </div>
+                        <p className="text-lg font-bold text-red-400 mt-0.5">-{exp.amount.toLocaleString()} {currency}</p>
                       </div>
-                      <p className="text-lg font-bold text-red-400 mt-0.5">-{exp.amount.toLocaleString()} {currency}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => { markExpensePaid(exp.id); toast.success(`${exp.name}: -${exp.amount.toLocaleString()} ${currency} оплачено`); }}
-                        disabled={exp.paidThisMonth}
-                        className={exp.paidThisMonth ? 'bg-red-500/20 text-red-400 cursor-default' : 'bg-red-500 hover:bg-red-600 text-white'}
-                      >
-                        <Check className="h-4 w-4 mr-1" />
-                        {exp.paidThisMonth ? 'Оплачено' : 'Оплатить'}
-                      </Button>
-                      <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive h-8 w-8" onClick={() => deleteExpenseItem(exp.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => { markExpensePaid(exp.id); toast.success(`${exp.name}: -${exp.amount.toLocaleString()} ${currency} оплачено`); }}
+                          disabled={exp.paidThisMonth}
+                          className={exp.paidThisMonth ? 'bg-red-500/20 text-red-400 cursor-default' : 'bg-red-500 hover:bg-red-600 text-white'}
+                        >
+                          <Check className="h-4 w-4 mr-1" />
+                          {exp.paidThisMonth ? 'Оплачено' : 'Оплатить'}
+                        </Button>
+                        <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive h-8 w-8" onClick={() => deleteExpenseItem(exp.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
             )}
           </TabsContent>
         </Tabs>
@@ -211,14 +240,17 @@ export default function IncomePage() {
           <DialogHeader><DialogTitle>Новый источник дохода</DialogTitle></DialogHeader>
           <div className="space-y-3 mt-2">
             <div className="space-y-1"><Label>Название</Label><Input value={iForm.name} onChange={(e) => setIForm((f) => ({ ...f, name: e.target.value }))} placeholder="Зарплата" /></div>
-            <div className="space-y-1"><Label>Сумма ({currency})</Label><Input type="number" value={iForm.amount} onChange={(e) => setIForm((f) => ({ ...f, amount: e.target.value }))} /></div>
+            <div className="space-y-1"><Label>Сумма ({currency})</Label><Input type="number" value={iForm.amount} onChange={(e) => setIForm((f) => ({ ...f, amount: e.target.value }))} placeholder="0" /></div>
             <div className="space-y-1"><Label>Категория</Label>
               <Select value={iForm.category} onValueChange={(v) => setIForm((f) => ({ ...f, category: v as IncomeCategory }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{INCOME_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="space-y-1"><Label>День поступления (число месяца)</Label><Input type="number" min={1} max={31} value={iForm.scheduleDay} onChange={(e) => setIForm((f) => ({ ...f, scheduleDay: e.target.value }))} placeholder="Например: 5" /></div>
+            <div className="space-y-1">
+              <Label>Дата получения (опционально)</Label>
+              <Input type="date" value={iForm.scheduleDate} onChange={(e) => setIForm((f) => ({ ...f, scheduleDate: e.target.value }))} />
+            </div>
           </div>
           <div className="flex gap-3 mt-2"><Button variant="outline" onClick={() => setIncomeDialog(false)} className="flex-1">Отмена</Button><Button onClick={handleAddIncome} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white">Добавить</Button></div>
         </DialogContent>
@@ -230,14 +262,17 @@ export default function IncomePage() {
           <DialogHeader><DialogTitle>Новый расход</DialogTitle></DialogHeader>
           <div className="space-y-3 mt-2">
             <div className="space-y-1"><Label>Название</Label><Input value={eForm.name} onChange={(e) => setEForm((f) => ({ ...f, name: e.target.value }))} placeholder="Проездной" /></div>
-            <div className="space-y-1"><Label>Сумма ({currency})</Label><Input type="number" value={eForm.amount} onChange={(e) => setEForm((f) => ({ ...f, amount: e.target.value }))} /></div>
+            <div className="space-y-1"><Label>Сумма ({currency})</Label><Input type="number" value={eForm.amount} onChange={(e) => setEForm((f) => ({ ...f, amount: e.target.value }))} placeholder="0" /></div>
             <div className="space-y-1"><Label>Категория</Label>
               <Select value={eForm.category} onValueChange={(v) => setEForm((f) => ({ ...f, category: v as ExpenseCategory }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{EXPENSE_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="space-y-1"><Label>День оплаты (число месяца)</Label><Input type="number" min={1} max={31} value={eForm.scheduleDay} onChange={(e) => setEForm((f) => ({ ...f, scheduleDay: e.target.value }))} placeholder="Например: 1" /></div>
+            <div className="space-y-1">
+              <Label>Дата оплаты (опционально)</Label>
+              <Input type="date" value={eForm.scheduleDate} onChange={(e) => setEForm((f) => ({ ...f, scheduleDate: e.target.value }))} />
+            </div>
           </div>
           <div className="flex gap-3 mt-2"><Button variant="outline" onClick={() => setExpenseDialog(false)} className="flex-1">Отмена</Button><Button onClick={handleAddExpense} className="flex-1 bg-red-500 hover:bg-red-600 text-white">Добавить</Button></div>
         </DialogContent>
@@ -249,7 +284,7 @@ export default function IncomePage() {
           <DialogHeader><DialogTitle>Быстрый доход</DialogTitle></DialogHeader>
           <div className="space-y-3 mt-2">
             <div className="space-y-1"><Label>Описание</Label><Input value={qiForm.name} onChange={(e) => setQiForm((f) => ({ ...f, name: e.target.value }))} placeholder="Получил от друга" /></div>
-            <div className="space-y-1"><Label>Сумма ({currency})</Label><Input type="number" value={qiForm.amount} onChange={(e) => setQiForm((f) => ({ ...f, amount: e.target.value }))} /></div>
+            <div className="space-y-1"><Label>Сумма ({currency})</Label><Input type="number" value={qiForm.amount} onChange={(e) => setQiForm((f) => ({ ...f, amount: e.target.value }))} placeholder="0" /></div>
             <div className="space-y-1"><Label>Категория</Label>
               <Select value={qiForm.category} onValueChange={(v) => setQiForm((f) => ({ ...f, category: v as IncomeCategory }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -267,7 +302,7 @@ export default function IncomePage() {
           <DialogHeader><DialogTitle>Быстрый расход</DialogTitle></DialogHeader>
           <div className="space-y-3 mt-2">
             <div className="space-y-1"><Label>Описание</Label><Input value={qeForm.name} onChange={(e) => setQeForm((f) => ({ ...f, name: e.target.value }))} placeholder="Кофе в кафе" /></div>
-            <div className="space-y-1"><Label>Сумма ({currency})</Label><Input type="number" value={qeForm.amount} onChange={(e) => setQeForm((f) => ({ ...f, amount: e.target.value }))} /></div>
+            <div className="space-y-1"><Label>Сумма ({currency})</Label><Input type="number" value={qeForm.amount} onChange={(e) => setQeForm((f) => ({ ...f, amount: e.target.value }))} placeholder="0" /></div>
             <div className="space-y-1"><Label>Категория</Label>
               <Select value={qeForm.category} onValueChange={(v) => setQeForm((f) => ({ ...f, category: v as ExpenseCategory }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>

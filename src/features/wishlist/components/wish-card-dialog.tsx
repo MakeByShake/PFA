@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X, Plus } from 'lucide-react';
 import { WishCard, WishLabel } from '@/lib/types';
 
@@ -29,8 +28,8 @@ export function WishCardDialog({ open, onClose, onSave, columnId, initial, title
     description: initial?.description ?? '',
     icon: initial?.icon ?? '🛍️',
     labels: (initial?.labels ?? []) as WishLabel[],
-    targetAmount: initial?.targetAmount ?? 0,
-    currentAmount: initial?.currentAmount ?? 0,
+    targetAmount: initial?.targetAmount ? String(initial.targetAmount) : '',
+    currentAmount: initial?.currentAmount ? String(initial.currentAmount) : '',
     deadline: initial?.deadline ?? '',
     columnId: initial?.columnId ?? columnId,
   });
@@ -49,7 +48,11 @@ export function WishCardDialog({ open, onClose, onSave, columnId, initial, title
 
   const handleSave = () => {
     if (!form.title.trim()) return;
-    onSave(form);
+    onSave({
+      ...form,
+      targetAmount: parseFloat(form.targetAmount) || 0,
+      currentAmount: parseFloat(form.currentAmount) || 0,
+    });
     onClose();
   };
 
@@ -105,7 +108,8 @@ export function WishCardDialog({ open, onClose, onSave, columnId, initial, title
                 type="number"
                 min={0}
                 value={form.targetAmount}
-                onChange={(e) => setForm((f) => ({ ...f, targetAmount: Number(e.target.value) }))}
+                onChange={(e) => setForm((f) => ({ ...f, targetAmount: e.target.value }))}
+                placeholder="0"
               />
             </div>
             <div className="space-y-2">
@@ -114,7 +118,8 @@ export function WishCardDialog({ open, onClose, onSave, columnId, initial, title
                 type="number"
                 min={0}
                 value={form.currentAmount}
-                onChange={(e) => setForm((f) => ({ ...f, currentAmount: Number(e.target.value) }))}
+                onChange={(e) => setForm((f) => ({ ...f, currentAmount: e.target.value }))}
+                placeholder="0"
               />
             </div>
           </div>

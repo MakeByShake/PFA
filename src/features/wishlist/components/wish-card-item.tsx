@@ -1,10 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { MoreHorizontal, Trash2, Edit2, Plus, ArrowRight } from 'lucide-react';
+import { MoreHorizontal, Trash2, Edit2, ArrowRight, PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub,
@@ -14,6 +17,7 @@ import { WishCard, WishColumn } from '@/lib/types';
 import { WishCardDialog } from './wish-card-dialog';
 import { useWishlistStore } from '@/stores/wishlist-store';
 import { useAuthStore } from '@/stores/auth-store';
+import { toast } from 'sonner';
 
 interface Props {
   card: WishCard;
@@ -28,6 +32,8 @@ const LABEL_COLORS: Record<string, string> = {
 
 export function WishCardItem({ card, columns }: Props) {
   const [editOpen, setEditOpen] = useState(false);
+  const [replenishOpen, setReplenishOpen] = useState(false);
+  const [replenishAmount, setReplenishAmount] = useState('');
   const { updateCard, deleteCard, moveCard, incrementCard } = useWishlistStore();
   const currency = useAuthStore((s) => s.currentUser?.currency ?? '₸');
 
@@ -40,6 +46,15 @@ export function WishCardItem({ card, columns }: Props) {
     if (days <= 7) return 'text-red-400';
     if (days <= 30) return 'text-amber-400';
     return 'text-emerald-400';
+  };
+
+  const handleReplenish = () => {
+    const amount = parseFloat(replenishAmount);
+    if (!amount || amount <= 0) return;
+    incrementCard(card.id, amount);
+    toast.success(`+${amount.toLocaleString()} ${currency} добавлено к накоплению`);
+    setReplenishAmount('');
+    setReplenishOpen(false);
   };
 
   return (
@@ -58,7 +73,11 @@ export function WishCardItem({ card, columns }: Props) {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 flex-shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+              >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -110,6 +129,16 @@ export function WishCardItem({ card, columns }: Props) {
               <span className="font-semibold text-emerald-400">{Math.round(progress)}%</span>
             </div>
             <Progress value={progress} className="h-1.5 bg-muted" />
+            {progress < 100 && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setReplenishOpen(true)}
+                className="w-full h-7 text-xs gap-1.5 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 mt-1"
+              >
+                <PlusCircle className="h-3.5 w-3.5" /> Пополнить накопление
+              </Button>
+            )}
           </div>
         )}
 
@@ -121,6 +150,7 @@ export function WishCardItem({ card, columns }: Props) {
         )}
       </div>
 
+      {/* Edit dialog */}
       <WishCardDialog
         open={editOpen}
         onClose={() => setEditOpen(false)}
@@ -129,6 +159,43 @@ export function WishCardItem({ card, columns }: Props) {
         initial={card}
         title="Редактировать"
       />
+
+      {/* Replenish dialog */}
+      <Dialog open={replenishOpen} onOpenChange={(v) => { if (!v) { setReplenishAmount(''); setReplenishOpen(false); } }}>
+        <DialogContent className="bg-card border-border text-foreground max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Пополнить: {card.title}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <div className="text-sm text-muted-foreground">
+              Накоплено: <span className="text-emerald-400 font-semibold">{card.currentAmount.toLocaleString()} {currency}</span>
+              {' / '}{card.targetAmount.toLocaleString()} {currency}
+            </div>
+            <div className="space-y-1.5">
+              <Label>Сколько добавить ({currency})</Label>
+              <Input
+                type="number"
+                min={1}
+                value={replenishAmount}
+                onChange={(e) => setReplenishAmount(e.target.value)}
+                placeholder="Например: 5000"
+                autoFocus
+                onKeyDown={(e) => e.key === 'Enter' && handleReplenish()}
+              />
+            </div>
+          </div>
+          <div className="flex gap-3 mt-2">
+            <Button variant="outline" onClick={() => setReplenishOpen(false)} className="flex-1">Отмена</Button>
+            <Button
+              onClick={handleReplenish}
+              disabled={!replenishAmount || parseFloat(replenishAmount) <= 0}
+              className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white"
+            >
+              Пополнить
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

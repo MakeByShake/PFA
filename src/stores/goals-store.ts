@@ -1,7 +1,8 @@
 'use client';
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
 import { Goal, GoalFormData, GoalFilters, GoalStats } from '@/features/goals/types';
 
 const DEFAULT_FILTERS: GoalFilters = {
@@ -14,6 +15,7 @@ interface GoalsStore {
   goals: Goal[];
   filters: GoalFilters;
   title: string;
+  setGoals: (goals: Goal[]) => void;
   setFilters: (filters: GoalFilters) => void;
   setTitle: (title: string) => void;
   addGoal: (data: GoalFormData) => void;
@@ -22,57 +24,73 @@ interface GoalsStore {
   incrementGoal: (id: string, amount: number) => void;
 }
 
-export const useGoalsStore = create<GoalsStore>()(
-  persist(
-    (set, get) => ({
-      goals: [],
-      filters: DEFAULT_FILTERS,
-      title: 'Мои цели',
+const uid = () => auth.currentUser?.uid ?? null;
 
-      setFilters: (filters) => set({ filters }),
-      setTitle: (title) => set({ title }),
+// Goals use Date objects — serialize for Firestore
+function toFirestore(goal: Goal): Record<string, unknown> {
+  return {
+    ...goal,
+    lastResetAt: goal.lastResetAt instanceof Date ? goal.lastResetAt.toISOString() : goal.lastResetAt,
+    createdAt: goal.createdAt instanceof Date ? goal.createdAt.toISOString() : goal.createdAt,
+    updatedAt: goal.updatedAt instanceof Date ? goal.updatedAt.toISOString() : goal.updatedAt,
+  };
+}
 
-      addGoal: (data) => {
-        const now = new Date().toISOString();
-        const newGoal: Goal = {
-          id: `goal-${Date.now()}`,
-          ...data,
-          currentValue: 0,
-          lastResetAt: new Date(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        set((s) => ({ goals: [...s.goals, newGoal] }));
-      },
+export const useGoalsStore = create<GoalsStore>()((set, get) => ({
+  goals: [],
+  filters: DEFAULT_FILTERS,
+  title: 'Мои цели',
 
-      updateGoal: (id, data) => {
-        set((s) => ({
-          goals: s.goals.map((g) =>
-            g.id === id ? { ...g, ...data, updatedAt: new Date() } : g
-          ),
-        }));
-      },
+  setGoals: (goals) => set({ goals }),
+  setFilters: (filters) => set({ filters }),
+  setTitle: (title) => set({ title }),
 
-      deleteGoal: (id) => {
-        set((s) => ({ goals: s.goals.filter((g) => g.id !== id) }));
-      },
+  addGoal: (data) => {
+    const u = uid();
+    const newGoal: Goal = {
+      id: `goal-${Date.now()}`,
+      ...data,
+      currentValue: 0,
+      lastResetAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    set((s) => ({ goals: [...s.goals, newGoal] }));
+    if (u) setDoc(doc(db, 'users', u, 'goals', newGoal.id), toFirestore(newGoal));
+  },
 
-      incrementGoal: (id, amount) => {
-        set((s) => ({
-          goals: s.goals.map((g) => {
-            if (g.id !== id) return g;
-            const next = Math.min(g.currentValue + amount, g.targetValue);
-            return { ...g, currentValue: next, updatedAt: new Date() };
-          }),
-        }));
-      },
-    }),
-    {
-      name: 'pfa-goals',
-      partialize: (s) => ({ goals: s.goals, title: s.title }),
-    }
-  )
-);
+  updateGoal: (id, data) => {
+    const u = uid();
+    set((s) => {
+      const goals = s.goals.map((g) =>
+        g.id === id ? { ...g, ...data, updatedAt: new Date() } : g
+      );
+      const goal = goals.find((g) => g.id === id);
+      if (u && goal) setDoc(doc(db, 'users', u, 'goals', id), toFirestore(goal));
+      return { goals };
+    });
+  },
+
+  deleteGoal: (id) => {
+    const u = uid();
+    set((s) => ({ goals: s.goals.filter((g) => g.id !== id) }));
+    if (u) deleteDoc(doc(db, 'users', u, 'goals', id));
+  },
+
+  incrementGoal: (id, amount) => {
+    const u = uid();
+    set((s) => {
+      const goals = s.goals.map((g) => {
+        if (g.id !== id) return g;
+        const next = Math.min(g.currentValue + amount, g.targetValue);
+        return { ...g, currentValue: next, updatedAt: new Date() };
+      });
+      const goal = goals.find((g) => g.id === id);
+      if (u && goal) setDoc(doc(db, 'users', u, 'goals', id), toFirestore(goal));
+      return { goals };
+    });
+  },
+}));
 
 export function getFilteredGoals(store: GoalsStore): Goal[] {
   const { goals, filters } = store;
