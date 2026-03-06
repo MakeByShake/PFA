@@ -82,7 +82,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     try {
       const credential = await createUserWithEmailAndPassword(auth, email, password);
       const uid = credential.user.uid;
-      const role: UserRole = email.toLowerCase() === 'admin@pfa.app' ? 'admin' : 'user';
+      const role: UserRole = email.toLowerCase() === 'admin@gmail.com' ? 'admin' : 'user';
       const newUser: AppUser = {
         id: uid,
         name,

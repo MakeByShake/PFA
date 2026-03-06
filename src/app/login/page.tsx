@@ -63,7 +63,7 @@ export default function LoginPage() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="admin@pfa.app"
+                    placeholder="email@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-9"
@@ -94,10 +94,6 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Hint */}
-              <div className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
-                <p>Нет аккаунта? <a href="/register" className="text-emerald-400 font-medium">Зарегистрируйтесь</a> — первый пользователь с email <span className="text-foreground">admin@pfa.app</span> автоматически получит права администратора.</p>
-              </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-3">
               <Button
