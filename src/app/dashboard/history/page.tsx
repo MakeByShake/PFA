@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Plus, Search, Trash2, TrendingUp, TrendingDown, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Search, Trash2, TrendingUp, TrendingDown, CalendarDays, ChevronLeft, ChevronRight, CalendarIcon } from 'lucide-react';
+import { PeriodCalendarPicker } from '@/features/goals/components/period-calendar-picker';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +18,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useWalletStore } from '@/stores/wallet-store';
 import type { TransactionType } from '@/lib/types';
 
-type PeriodFilter = 'today' | 'yesterday' | 'week' | 'month' | 'year' | 'all';
+type PeriodFilter = 'today' | 'yesterday' | 'week' | 'month' | 'year' | 'all' | 'range';
 
 const PAGE_SIZE = 15;
 
@@ -44,12 +45,16 @@ export default function HistoryPage() {
   const subtractMoneyW = useWalletStore((s) => s.subtractMoney);
 
   const [period, setPeriod] = useState<PeriodFilter>('month');
+  const [rangeStart, setRangeStart] = useState<Date>(() => { const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); return d; });
+  const [rangeEnd, setRangeEnd] = useState<Date>(() => { const d = new Date(); d.setHours(23, 59, 59, 999); return d; });
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ type: 'expense' as TransactionType, amount: '', category: 'другое', note: '', date: new Date().toISOString().split('T')[0] });
 
-  const { start, end } = getPeriodRange(period);
+  const { start, end } = period === 'range'
+    ? { start: rangeStart, end: rangeEnd }
+    : getPeriodRange(period as Exclude<PeriodFilter, 'range'>);
 
   const filtered = useMemo(() => {
     return transactions.filter((t) => {
@@ -77,7 +82,7 @@ export default function HistoryPage() {
     toast.success('Транзакция добавлена');
   };
 
-  const PERIOD_LABELS: Record<PeriodFilter, string> = { today: 'Сегодня', yesterday: 'Вчера', week: 'Неделя', month: 'Месяц', year: 'Год', all: 'Все' };
+  const PERIOD_LABELS: Record<Exclude<PeriodFilter, 'range'>, string> = { today: 'Сегодня', yesterday: 'Вчера', week: 'Неделя', month: 'Месяц', year: 'Год', all: 'Все' };
 
   return (
     <div className="p-4 sm:p-6 min-h-screen">
@@ -94,8 +99,8 @@ export default function HistoryPage() {
         </div>
 
         {/* Period filter */}
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
-          {(Object.keys(PERIOD_LABELS) as PeriodFilter[]).map((p) => (
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-1 scrollbar-hide">
+          {(Object.keys(PERIOD_LABELS) as Exclude<PeriodFilter, 'range'>[]).map((p) => (
             <button
               key={p}
               onClick={() => { setPeriod(p); setPage(1); }}
@@ -104,7 +109,27 @@ export default function HistoryPage() {
               {PERIOD_LABELS[p]}
             </button>
           ))}
+          <button
+            onClick={() => { setPeriod('range'); setPage(1); }}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 flex items-center gap-1.5 ${period === 'range' ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground hover:bg-muted/70'}`}
+          >
+            <CalendarIcon className="h-3.5 w-3.5" />
+            Период
+          </button>
         </div>
+        {period === 'range' && (
+          <div className="mb-4">
+            <PeriodCalendarPicker
+              periodStart={rangeStart}
+              periodEnd={rangeEnd}
+              onPeriodChange={(start, end) => {
+                setRangeStart(start);
+                setRangeEnd(end);
+                setPage(1);
+              }}
+            />
+          </div>
+        )}
 
         {/* Summary */}
         <div className="grid grid-cols-3 gap-3 mb-5">

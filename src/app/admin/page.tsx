@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Plus, Trash2, Shield, Users, Crown, Pencil, Eye, EyeOff, RotateCcw, X } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Plus, Trash2, Shield, Users, Crown, Pencil, Eye, EyeOff, RotateCcw, X, CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,8 +14,41 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PeriodCalendarPicker } from '@/features/goals/components/period-calendar-picker';
 import { useAuthStore } from '@/stores/auth-store';
 import type { AppUser, UserRole } from '@/lib/types';
+
+type DateFilter = 'all' | 'today' | 'yesterday' | 'week' | 'month' | 'range';
+
+const DATE_FILTER_LABELS: Record<Exclude<DateFilter, 'range'>, string> = {
+  all: 'Все',
+  today: 'Сегодня',
+  yesterday: 'Вчера',
+  week: 'Неделя',
+  month: 'Месяц',
+};
+
+function getDateRange(filter: DateFilter, rangeStart: Date, rangeEnd: Date): { start: Date; end: Date } | null {
+  if (filter === 'all') return null;
+  if (filter === 'range') return { start: rangeStart, end: rangeEnd };
+
+  const now = new Date();
+  const start = new Date(now);
+  const end = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  end.setHours(23, 59, 59, 999);
+
+  if (filter === 'yesterday') {
+    start.setDate(start.getDate() - 1);
+    end.setDate(end.getDate() - 1);
+  } else if (filter === 'week') {
+    start.setDate(start.getDate() - 7);
+  } else if (filter === 'month') {
+    start.setDate(1);
+  }
+
+  return { start, end };
+}
 
 function UserAvatar({ user }: { user: AppUser }) {
   const initials = user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
@@ -30,7 +63,6 @@ function UserAvatar({ user }: { user: AppUser }) {
 export default function AdminPage() {
   const { users, deletedUsers, currentUser, addUser, deleteUser, restoreUser, permanentDeleteUser, updateUser, loadAllUsers } = useAuthStore();
 
-  // Load all users from Firestore on mount
   useEffect(() => { loadAllUsers(); }, []);
 
   // Add user dialog
@@ -43,6 +75,24 @@ export default function AdminPage() {
   const [editTarget, setEditTarget] = useState<AppUser | null>(null);
   const [editForm, setEditForm] = useState({ name: '', email: '', password: '', role: 'user' as UserRole });
   const [showEditPwd, setShowEditPwd] = useState(false);
+
+  // Date filter
+  const [dateFilter, setDateFilter] = useState<DateFilter>('all');
+  const [rangeStart, setRangeStart] = useState<Date>(() => {
+    const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); return d;
+  });
+  const [rangeEnd, setRangeEnd] = useState<Date>(() => {
+    const d = new Date(); d.setHours(23, 59, 59, 999); return d;
+  });
+
+  const filteredUsers = useMemo(() => {
+    const range = getDateRange(dateFilter, rangeStart, rangeEnd);
+    if (!range) return users;
+    return users.filter((u) => {
+      const d = new Date(u.createdAt);
+      return d >= range.start && d <= range.end;
+    });
+  }, [users, dateFilter, rangeStart, rangeEnd]);
 
   const adminCount = users.filter((u) => u.role === 'admin').length;
   const userCount = users.filter((u) => u.role === 'user').length;
@@ -151,6 +201,9 @@ export default function AdminPage() {
                 <p className="font-semibold text-sm">{user.name}{user.id === currentUser?.id && <span className="ml-1 text-xs text-muted-foreground">(вы)</span>}</p>
                 <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                 <p className="text-xs text-muted-foreground font-mono">{'•'.repeat(Math.min(user.password.length, 8))}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Зарег.: {new Date(user.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </p>
                 <Select value={user.role} onValueChange={(v) => handleRoleChange(user.id, v as UserRole)} disabled={user.id === currentUser?.id}>
                   <SelectTrigger className="h-6 text-[11px] w-32 mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -214,28 +267,28 @@ export default function AdminPage() {
             <CardContent className="p-4 text-center">
               <Users className="h-6 w-6 mx-auto mb-1 text-emerald-400" />
               <p className="text-2xl font-bold">{users.length}</p>
-              <p className="text-xs text-muted-foreground">Всего</p>
+              <p className="text-[10px] text-muted-foreground leading-tight">Всего</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <Crown className="h-6 w-6 mx-auto mb-1 text-amber-400" />
               <p className="text-2xl font-bold">{adminCount}</p>
-              <p className="text-xs text-muted-foreground">Администраторов</p>
+              <p className="text-[10px] text-muted-foreground leading-tight">Админов</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <Users className="h-6 w-6 mx-auto mb-1 text-blue-400" />
               <p className="text-2xl font-bold">{userCount}</p>
-              <p className="text-xs text-muted-foreground">Пользователей</p>
+              <p className="text-[10px] text-muted-foreground leading-tight">Юзеров</p>
             </CardContent>
           </Card>
         </div>
 
         <Tabs defaultValue="users">
           <TabsList className="mb-4">
-            <TabsTrigger value="users">Пользователи ({users.length})</TabsTrigger>
+            <TabsTrigger value="users">Пользователи ({filteredUsers.length})</TabsTrigger>
             <TabsTrigger value="trash" className="gap-1.5">
               Корзина
               {deletedUsers.length > 0 && (
@@ -245,6 +298,48 @@ export default function AdminPage() {
           </TabsList>
 
           <TabsContent value="users">
+            {/* Date filter */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              {(Object.keys(DATE_FILTER_LABELS) as Exclude<DateFilter, 'range'>[]).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setDateFilter(f)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+                    dateFilter === f
+                      ? 'bg-emerald-500 text-white'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/70'
+                  }`}
+                >
+                  {DATE_FILTER_LABELS[f]}
+                </button>
+              ))}
+              <button
+                onClick={() => setDateFilter('range')}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 flex items-center gap-1.5 ${
+                  dateFilter === 'range'
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/70'
+                }`}
+              >
+                <CalendarIcon className="h-3.5 w-3.5" />
+                Период
+              </button>
+            </div>
+
+            {/* Calendar range picker (shown when range is active) */}
+            {dateFilter === 'range' && (
+              <div className="mb-4">
+                <PeriodCalendarPicker
+                  periodStart={rangeStart}
+                  periodEnd={rangeEnd}
+                  onPeriodChange={(start, end) => {
+                    setRangeStart(start);
+                    setRangeEnd(end);
+                  }}
+                />
+              </div>
+            )}
+
             {/* Desktop table */}
             <Card className="hidden md:block">
               <CardHeader className="pb-3"><CardTitle className="text-base">Список пользователей</CardTitle></CardHeader>
@@ -256,12 +351,12 @@ export default function AdminPage() {
                       <TableHead>Email</TableHead>
                       <TableHead>Пароль</TableHead>
                       <TableHead>Роль</TableHead>
-                      <TableHead>Создан</TableHead>
+                      <TableHead>Зарегистрирован</TableHead>
                       <TableHead className="text-right">Действия</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {users.map((user) => <UserRow key={user.id} user={user} />)}
+                    {filteredUsers.map((user) => <UserRow key={user.id} user={user} />)}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -269,8 +364,15 @@ export default function AdminPage() {
 
             {/* Mobile cards */}
             <div className="md:hidden space-y-3">
-              {users.map((user) => <UserCard key={user.id} user={user} />)}
+              {filteredUsers.map((user) => <UserCard key={user.id} user={user} />)}
             </div>
+
+            {filteredUsers.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                <Users className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                <p className="text-sm">Нет пользователей за этот период</p>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="trash">
