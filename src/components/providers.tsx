@@ -4,6 +4,7 @@ import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/sonner';
 import { useFirebaseData } from '@/hooks/use-firebase-data';
 import { usePwa } from '@/hooks/use-pwa';
+import { PwaInstallBanner } from '@/components/pwa-install-banner';
 import { WifiOff } from 'lucide-react';
 
 function FirebaseInit() {
@@ -35,6 +36,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <FirebaseInit />
       <PwaInit />
       {children}
+      <PwaInstallBanner />
       <Toaster richColors position="top-right" />
     </ThemeProvider>
   );
