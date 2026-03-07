@@ -133,6 +133,17 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
+        {/* Admin link */}
+        {currentUser.role === 'admin' && (
+          <Card className="mb-4 border-violet-500/30 bg-violet-500/5">
+            <CardContent className="p-3">
+              <Button variant="ghost" className="w-full gap-2 text-violet-400 hover:text-violet-300 hover:bg-violet-500/10" onClick={() => router.push('/admin')}>
+                <Shield className="h-4 w-4" /> Панель администратора
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Balance */}
         <Card className="mb-4 border-emerald-500/20 bg-emerald-500/5">
           <CardHeader className="pb-2">
@@ -230,17 +241,6 @@ export default function ProfilePage() {
         <Button onClick={handleSave} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white gap-2 mb-4">
           <Save className="h-4 w-4" /> Сохранить профиль
         </Button>
-
-        {/* Admin link */}
-        {currentUser.role === 'admin' && (
-          <Card className="mb-4">
-            <CardContent className="p-4">
-              <Button variant="outline" className="w-full gap-2" onClick={() => router.push('/admin')}>
-                <Shield className="h-4 w-4 text-emerald-400" /> Панель администратора
-              </Button>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Logout */}
         <Button
