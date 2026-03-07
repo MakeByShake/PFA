@@ -28,7 +28,7 @@ export function MobileHeader() {
   const currentMoney = useWalletStore((s) => s.currentMoney);
 
   const title = PAGE_TITLES[pathname] ?? 'PFA';
-  const { installPrompt, isInstalled, installApp } = usePwa();
+  const { installPrompt, isInstalled, isIos, installApp } = usePwa();
 
   const handleLogout = () => {
     logout();
@@ -49,9 +49,19 @@ export function MobileHeader() {
           <div className="text-sm font-semibold text-emerald-400 mr-2">
             {currentMoney.toLocaleString('ru-RU')} {currentUser?.currency ?? '₸'}
           </div>
-          {installPrompt && !isInstalled && (
+          {!isInstalled && (installPrompt || isIos) && (
             <button
-              onClick={() => { installApp(); toast.success('Приложение устанавливается...'); }}
+              onClick={() => {
+                if (installPrompt) {
+                  installApp();
+                  toast.success('Приложение устанавливается...');
+                } else {
+                  toast('Нажми Share → «На экран Домой»', {
+                    description: 'Так ты установишь PFA как приложение',
+                    duration: 6000,
+                  });
+                }
+              }}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/25 active:scale-95 transition-all"
             >
               <span className="relative flex h-2 w-2">
@@ -59,7 +69,7 @@ export function MobileHeader() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
               <Download className="h-3 w-3" />
-              <span className="text-[11px] font-semibold leading-none">Приложение</span>
+              <span className="text-[11px] font-semibold leading-none">Скачать</span>
             </button>
           )}
           <ThemeToggle />

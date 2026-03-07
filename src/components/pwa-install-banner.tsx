@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Download, X, Share, Plus } from 'lucide-react';
+import { Download, X, Share } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePwa } from '@/hooks/use-pwa';
 
@@ -43,37 +43,25 @@ export function PwaInstallBanner() {
   // Don't show if: already installed as PWA, user dismissed, or server
   if (isStandalone || isInstalled || dismissed || platform === 'unknown') return null;
 
-  // iOS: show manual instructions (no beforeinstallprompt on Safari)
+  // iOS: show compact one-line hint (no beforeinstallprompt on Safari)
   if (platform === 'ios') {
     return (
-      <div className="fixed bottom-20 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-80 z-50 bg-card border border-border rounded-2xl shadow-xl p-4 animate-in slide-in-from-bottom-4 duration-300">
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-emerald-500 flex-shrink-0">
-              <Download className="h-5 w-5 text-white" />
+      <div className="fixed bottom-20 left-4 right-4 z-50 bg-card border border-border rounded-2xl shadow-xl p-3 animate-in slide-in-from-bottom-4 duration-300">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-emerald-500 flex-shrink-0">
+              <Download className="h-4 w-4 text-white" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="font-semibold text-sm">Установить PFA</p>
-              <p className="text-xs text-muted-foreground">Добавить на главный экран</p>
+              <p className="text-xs text-muted-foreground truncate">
+                Нажми <Share className="h-3 w-3 inline text-blue-400" /> → <strong className="text-foreground">На экран Домой</strong>
+              </p>
             </div>
           </div>
-          <button onClick={handleDismiss} className="text-muted-foreground hover:text-foreground mt-0.5">
+          <button onClick={handleDismiss} className="text-muted-foreground hover:text-foreground flex-shrink-0">
             <X className="h-4 w-4" />
           </button>
-        </div>
-        <div className="space-y-2 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <span className="flex items-center justify-center h-6 w-6 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold flex-shrink-0">1</span>
-            <span>Нажми <Share className="h-3.5 w-3.5 inline text-blue-400" /> <strong className="text-foreground">Поделиться</strong> внизу экрана</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="flex items-center justify-center h-6 w-6 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold flex-shrink-0">2</span>
-            <span>Выбери <Plus className="h-3.5 w-3.5 inline" /> <strong className="text-foreground">На экран Домой</strong></span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="flex items-center justify-center h-6 w-6 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold flex-shrink-0">3</span>
-            <span>Нажми <strong className="text-foreground">Добавить</strong></span>
-          </div>
         </div>
       </div>
     );

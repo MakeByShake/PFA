@@ -11,6 +11,7 @@ export function usePwa() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+  const [isIos, setIsIos] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -19,6 +20,9 @@ export function usePwa() {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
+
+    // Detect iOS
+    setIsIos(/iPhone|iPad|iPod/.test(navigator.userAgent) && !(window as any).MSStream);
 
     // Detect if already installed as PWA
     setIsInstalled(window.matchMedia('(display-mode: standalone)').matches);
@@ -59,5 +63,5 @@ export function usePwa() {
     }
   };
 
-  return { installPrompt: !!installPrompt, isInstalled, isOnline, installApp };
+  return { installPrompt: !!installPrompt, isInstalled, isOnline, isIos, installApp };
 }
