@@ -83,7 +83,7 @@ export default function CalculationsPage() {
                 </Button>
               ) : (
                 <div className="flex gap-2">
-                  <Input value={editBalance} onChange={(e) => setEditBalance(e.target.value)} type="number" className="w-32 h-8" autoFocus />
+                  <Input value={editBalance} onChange={(e) => setEditBalance(e.target.value)} inputMode="numeric" className="w-32 h-8" />
                   <Button size="sm" className="bg-emerald-500 text-white h-8" onClick={() => { setMoney(Number(editBalance)); setEditingBalance(false); }}>OK</Button>
                   <Button size="sm" variant="outline" className="h-8" onClick={() => setEditingBalance(false)}>✕</Button>
                 </div>
@@ -143,7 +143,7 @@ export default function CalculationsPage() {
             {/* Add plan item */}
             <div className="flex gap-2 mb-3">
               <Input value={newLabel} onChange={(e) => setNewLabel(e.target.value)} placeholder="Назначение" className="flex-1" />
-              <Input value={newAmount} onChange={(e) => setNewAmount(e.target.value)} placeholder="Сумма" type="number" className="w-28" />
+              <Input value={newAmount} onChange={(e) => setNewAmount(e.target.value)} placeholder="Сумма" inputMode="numeric" className="w-28" />
               <Button onClick={addPlanItem} size="icon" className="bg-emerald-500 hover:bg-emerald-600 text-white flex-shrink-0"><Plus className="h-4 w-4" /></Button>
             </div>
 

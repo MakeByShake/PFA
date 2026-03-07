@@ -58,7 +58,7 @@ export function WishCardDialog({ open, onClose, onSave, columnId, initial, title
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="bg-card border-border text-foreground max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-card border-border text-foreground max-w-lg max-h-[90vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
@@ -105,7 +105,7 @@ export function WishCardDialog({ open, onClose, onSave, columnId, initial, title
             <div className="space-y-2">
               <Label>Сумма цели (₸)</Label>
               <Input
-                type="number"
+                inputMode="numeric"
                 min={0}
                 value={form.targetAmount}
                 onChange={(e) => setForm((f) => ({ ...f, targetAmount: e.target.value }))}
@@ -115,7 +115,7 @@ export function WishCardDialog({ open, onClose, onSave, columnId, initial, title
             <div className="space-y-2">
               <Label>Накоплено (₸)</Label>
               <Input
-                type="number"
+                inputMode="numeric"
                 min={0}
                 value={form.currentAmount}
                 onChange={(e) => setForm((f) => ({ ...f, currentAmount: e.target.value }))}

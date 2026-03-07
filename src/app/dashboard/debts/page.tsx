@@ -160,7 +160,7 @@ export default function DebtsPage() {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="bg-card border-border text-foreground">
+        <DialogContent className="bg-card border-border text-foreground" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader><DialogTitle>Новый долг</DialogTitle></DialogHeader>
           <div className="space-y-3 mt-2">
             <div className="space-y-1"><Label>Имя человека</Label><Input value={form.personName} onChange={(e) => setForm((f) => ({ ...f, personName: e.target.value }))} placeholder="Иван" /></div>
@@ -173,7 +173,7 @@ export default function DebtsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1"><Label>Сумма ({currency})</Label><Input type="number" value={form.amount} onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))} /></div>
+            <div className="space-y-1"><Label>Сумма ({currency})</Label><Input inputMode="numeric" value={form.amount} onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))} /></div>
             <div className="space-y-1"><Label>Дедлайн</Label><Input type="date" value={form.dueDate} onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))} /></div>
             <div className="space-y-1"><Label>Заметки</Label><Textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Детали..." rows={2} /></div>
           </div>

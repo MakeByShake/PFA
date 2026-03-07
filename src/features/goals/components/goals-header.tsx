@@ -49,6 +49,8 @@ const createInitialForm = (): GoalFormData => {
 export function GoalsHeader({ onAdd, stats }: GoalsHeaderProps) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<GoalFormData>(createInitialForm);
+  const [targetStr, setTargetStr] = useState(String(createInitialForm().targetValue));
+  const [incrementStr, setIncrementStr] = useState(String(createInitialForm().incrementAmount));
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const { title, updateTitle } = useGoalsTitle();
@@ -81,7 +83,10 @@ export function GoalsHeader({ onAdd, stats }: GoalsHeaderProps) {
     e.preventDefault();
     if (!form.title.trim() || !form.unit.trim()) return;
     onAdd(form);
-    setForm(createInitialForm());
+    const initial = createInitialForm();
+    setForm(initial);
+    setTargetStr(String(initial.targetValue));
+    setIncrementStr(String(initial.incrementAmount));
     setOpen(false);
   };
 
@@ -116,12 +121,11 @@ export function GoalsHeader({ onAdd, stats }: GoalsHeaderProps) {
 
   // Handle period change and auto-calculate increment
   const handlePeriodChange = (start: Date, end: Date) => {
-    setForm((prev) => ({
-      ...prev,
-      periodStart: start,
-      periodEnd: end,
-      incrementAmount: calculateIncrement(prev.targetValue, start, end),
-    }));
+    setForm((prev) => {
+      const newIncrement = calculateIncrement(prev.targetValue, start, end);
+      setIncrementStr(String(newIncrement));
+      return { ...prev, periodStart: start, periodEnd: end, incrementAmount: newIncrement };
+    });
   };
 
   return (
@@ -165,7 +169,7 @@ export function GoalsHeader({ onAdd, stats }: GoalsHeaderProps) {
               </Button>
             </DialogTrigger>
 
-          <DialogContent className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white">
+          <DialogContent className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white" onOpenAutoFocus={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle className="text-xl">Новая цель</DialogTitle>
             </DialogHeader>
@@ -204,10 +208,17 @@ export function GoalsHeader({ onAdd, stats }: GoalsHeaderProps) {
                   </Label>
                   <Input
                     id="target"
-                    type="number"
-                    min={1}
-                    value={form.targetValue}
-                    onChange={(e) => updateForm('targetValue', Number(e.target.value))}
+                    inputMode="numeric"
+                    value={targetStr}
+                    onChange={(e) => {
+                      setTargetStr(e.target.value);
+                      const n = Number(e.target.value);
+                      if (e.target.value !== '' && !isNaN(n) && n > 0) {
+                        const newIncrement = calculateIncrement(n, form.periodStart, form.periodEnd);
+                        setIncrementStr(String(newIncrement));
+                        setForm((prev) => ({ ...prev, targetValue: n, incrementAmount: newIncrement }));
+                      }
+                    }}
                     className="bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white focus:border-emerald-500"
                   />
                 </div>
@@ -232,10 +243,15 @@ export function GoalsHeader({ onAdd, stats }: GoalsHeaderProps) {
                 </Label>
                 <Input
                   id="increment"
-                  type="number"
-                  min={1}
-                  value={form.incrementAmount}
-                  onChange={(e) => updateForm('incrementAmount', Number(e.target.value))}
+                  inputMode="numeric"
+                  value={incrementStr}
+                  onChange={(e) => {
+                    setIncrementStr(e.target.value);
+                    const n = Number(e.target.value);
+                    if (e.target.value !== '' && !isNaN(n) && n > 0) {
+                      updateForm('incrementAmount', n);
+                    }
+                  }}
                   className="bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white focus:border-emerald-500"
                 />
               </div>

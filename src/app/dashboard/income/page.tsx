@@ -236,11 +236,11 @@ export default function IncomePage() {
 
       {/* Add income dialog */}
       <Dialog open={incomeDialog} onOpenChange={setIncomeDialog}>
-        <DialogContent className="bg-card border-border text-foreground">
+        <DialogContent className="bg-card border-border text-foreground" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader><DialogTitle>Новый источник дохода</DialogTitle></DialogHeader>
           <div className="space-y-3 mt-2">
             <div className="space-y-1"><Label>Название</Label><Input value={iForm.name} onChange={(e) => setIForm((f) => ({ ...f, name: e.target.value }))} placeholder="Зарплата" /></div>
-            <div className="space-y-1"><Label>Сумма ({currency})</Label><Input type="number" value={iForm.amount} onChange={(e) => setIForm((f) => ({ ...f, amount: e.target.value }))} placeholder="0" /></div>
+            <div className="space-y-1"><Label>Сумма ({currency})</Label><Input inputMode="numeric" value={iForm.amount} onChange={(e) => setIForm((f) => ({ ...f, amount: e.target.value }))} placeholder="0" /></div>
             <div className="space-y-1"><Label>Категория</Label>
               <Select value={iForm.category} onValueChange={(v) => setIForm((f) => ({ ...f, category: v as IncomeCategory }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -258,11 +258,11 @@ export default function IncomePage() {
 
       {/* Add expense dialog */}
       <Dialog open={expenseDialog} onOpenChange={setExpenseDialog}>
-        <DialogContent className="bg-card border-border text-foreground">
+        <DialogContent className="bg-card border-border text-foreground" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader><DialogTitle>Новый расход</DialogTitle></DialogHeader>
           <div className="space-y-3 mt-2">
             <div className="space-y-1"><Label>Название</Label><Input value={eForm.name} onChange={(e) => setEForm((f) => ({ ...f, name: e.target.value }))} placeholder="Проездной" /></div>
-            <div className="space-y-1"><Label>Сумма ({currency})</Label><Input type="number" value={eForm.amount} onChange={(e) => setEForm((f) => ({ ...f, amount: e.target.value }))} placeholder="0" /></div>
+            <div className="space-y-1"><Label>Сумма ({currency})</Label><Input inputMode="numeric" value={eForm.amount} onChange={(e) => setEForm((f) => ({ ...f, amount: e.target.value }))} placeholder="0" /></div>
             <div className="space-y-1"><Label>Категория</Label>
               <Select value={eForm.category} onValueChange={(v) => setEForm((f) => ({ ...f, category: v as ExpenseCategory }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -280,11 +280,11 @@ export default function IncomePage() {
 
       {/* Quick income */}
       <Dialog open={quickIncomeDialog} onOpenChange={setQuickIncomeDialog}>
-        <DialogContent className="bg-card border-border text-foreground">
+        <DialogContent className="bg-card border-border text-foreground" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader><DialogTitle>Быстрый доход</DialogTitle></DialogHeader>
           <div className="space-y-3 mt-2">
             <div className="space-y-1"><Label>Описание</Label><Input value={qiForm.name} onChange={(e) => setQiForm((f) => ({ ...f, name: e.target.value }))} placeholder="Получил от друга" /></div>
-            <div className="space-y-1"><Label>Сумма ({currency})</Label><Input type="number" value={qiForm.amount} onChange={(e) => setQiForm((f) => ({ ...f, amount: e.target.value }))} placeholder="0" /></div>
+            <div className="space-y-1"><Label>Сумма ({currency})</Label><Input inputMode="numeric" value={qiForm.amount} onChange={(e) => setQiForm((f) => ({ ...f, amount: e.target.value }))} placeholder="0" /></div>
             <div className="space-y-1"><Label>Категория</Label>
               <Select value={qiForm.category} onValueChange={(v) => setQiForm((f) => ({ ...f, category: v as IncomeCategory }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -298,11 +298,11 @@ export default function IncomePage() {
 
       {/* Quick expense */}
       <Dialog open={quickExpenseDialog} onOpenChange={setQuickExpenseDialog}>
-        <DialogContent className="bg-card border-border text-foreground">
+        <DialogContent className="bg-card border-border text-foreground" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader><DialogTitle>Быстрый расход</DialogTitle></DialogHeader>
           <div className="space-y-3 mt-2">
             <div className="space-y-1"><Label>Описание</Label><Input value={qeForm.name} onChange={(e) => setQeForm((f) => ({ ...f, name: e.target.value }))} placeholder="Кофе в кафе" /></div>
-            <div className="space-y-1"><Label>Сумма ({currency})</Label><Input type="number" value={qeForm.amount} onChange={(e) => setQeForm((f) => ({ ...f, amount: e.target.value }))} placeholder="0" /></div>
+            <div className="space-y-1"><Label>Сумма ({currency})</Label><Input inputMode="numeric" value={qeForm.amount} onChange={(e) => setQeForm((f) => ({ ...f, amount: e.target.value }))} placeholder="0" /></div>
             <div className="space-y-1"><Label>Категория</Label>
               <Select value={qeForm.category} onValueChange={(v) => setQeForm((f) => ({ ...f, category: v as ExpenseCategory }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>

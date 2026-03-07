@@ -35,6 +35,8 @@ export function GoalCard({ goal, onIncrement, onDelete, onEdit }: GoalCardProps)
   const [showIncrementInput, setShowIncrementInput] = useState(false);
   const [incrementValue, setIncrementValue] = useState('');
   const incrementInputRef = useRef<HTMLInputElement>(null);
+  const [editTargetStr, setEditTargetStr] = useState(String(goal.targetValue));
+  const [editIncrementStr, setEditIncrementStr] = useState(String(goal.incrementAmount));
   const [editForm, setEditForm] = useState<GoalFormData>({
     title: goal.title,
     subtitle: goal.subtitle,
@@ -89,12 +91,11 @@ export function GoalCard({ goal, onIncrement, onDelete, onEdit }: GoalCardProps)
 
   // Handle period change and auto-calculate increment
   const handleEditPeriodChange = (start: Date, end: Date) => {
-    setEditForm((prev) => ({
-      ...prev,
-      periodStart: start,
-      periodEnd: end,
-      incrementAmount: calculateIncrement(prev.targetValue, start, end),
-    }));
+    setEditForm((prev) => {
+      const newIncrement = calculateIncrement(prev.targetValue, start, end);
+      setEditIncrementStr(String(newIncrement));
+      return { ...prev, periodStart: start, periodEnd: end, incrementAmount: newIncrement };
+    });
   };
 
   const openEditDialog = () => {
@@ -110,6 +111,8 @@ export function GoalCard({ goal, onIncrement, onDelete, onEdit }: GoalCardProps)
       periodStart: goal.periodStart,
       periodEnd: goal.periodEnd,
     });
+    setEditTargetStr(String(goal.targetValue));
+    setEditIncrementStr(String(goal.incrementAmount));
     setEditOpen(true);
   };
 
@@ -384,7 +387,7 @@ export function GoalCard({ goal, onIncrement, onDelete, onEdit }: GoalCardProps)
       </div>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white">
+        <DialogContent className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="text-xl">Редактировать цель</DialogTitle>
           </DialogHeader>
@@ -421,10 +424,17 @@ export function GoalCard({ goal, onIncrement, onDelete, onEdit }: GoalCardProps)
                 </Label>
                 <Input
                   id="edit-target"
-                  type="number"
-                  min={1}
-                  value={editForm.targetValue}
-                  onChange={(e) => updateEditForm('targetValue', Number(e.target.value))}
+                  inputMode="numeric"
+                  value={editTargetStr}
+                  onChange={(e) => {
+                    setEditTargetStr(e.target.value);
+                    const n = Number(e.target.value);
+                    if (e.target.value !== '' && !isNaN(n) && n > 0) {
+                      const newIncrement = calculateIncrement(n, editForm.periodStart, editForm.periodEnd);
+                      setEditIncrementStr(String(newIncrement));
+                      setEditForm((prev) => ({ ...prev, targetValue: n, incrementAmount: newIncrement }));
+                    }
+                  }}
                   className="bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white"
                 />
               </div>
@@ -448,10 +458,15 @@ export function GoalCard({ goal, onIncrement, onDelete, onEdit }: GoalCardProps)
               </Label>
               <Input
                 id="edit-increment"
-                type="number"
-                min={1}
-                value={editForm.incrementAmount}
-                onChange={(e) => updateEditForm('incrementAmount', Number(e.target.value))}
+                inputMode="numeric"
+                value={editIncrementStr}
+                onChange={(e) => {
+                  setEditIncrementStr(e.target.value);
+                  const n = Number(e.target.value);
+                  if (e.target.value !== '' && !isNaN(n) && n > 0) {
+                    updateEditForm('incrementAmount', n);
+                  }
+                }}
                 className="bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white"
               />
             </div>
