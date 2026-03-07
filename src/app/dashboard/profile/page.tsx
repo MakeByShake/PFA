@@ -135,9 +135,9 @@ export default function ProfilePage() {
 
         {/* Admin link */}
         {currentUser.role === 'admin' && (
-          <Card className="mb-4 border-violet-500/30 bg-violet-500/5">
+          <Card className="mb-4 border-emerald-500/30 bg-emerald-500/5">
             <CardContent className="p-3">
-              <Button variant="ghost" className="w-full gap-2 text-violet-400 hover:text-violet-300 hover:bg-violet-500/10" onClick={() => router.push('/admin')}>
+              <Button variant="ghost" className="w-full gap-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10" onClick={() => router.push('/admin')}>
                 <Shield className="h-4 w-4" /> Панель администратора
               </Button>
             </CardContent>
