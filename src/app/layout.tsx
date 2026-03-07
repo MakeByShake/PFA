@@ -11,10 +11,20 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'PFA — Personal Finance Application',
   description: 'Персональное финансовое приложение: цели, расходы, доходы, долги',
+  manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'PFA',
+  },
+  icons: {
+    icon: [
+      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
 };
 

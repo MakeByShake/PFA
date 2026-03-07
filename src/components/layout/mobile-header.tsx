@@ -1,11 +1,12 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, Wallet } from 'lucide-react';
+import { LogOut, Wallet, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useAuthStore } from '@/stores/auth-store';
 import { useWalletStore } from '@/stores/wallet-store';
+import { usePwa } from '@/hooks/use-pwa';
 import { toast } from 'sonner';
 
 const PAGE_TITLES: Record<string, string> = {
@@ -27,6 +28,7 @@ export function MobileHeader() {
   const currentMoney = useWalletStore((s) => s.currentMoney);
 
   const title = PAGE_TITLES[pathname] ?? 'PFA';
+  const { installPrompt, isInstalled, installApp } = usePwa();
 
   const handleLogout = () => {
     logout();
@@ -47,6 +49,17 @@ export function MobileHeader() {
           <div className="text-sm font-semibold text-emerald-400 mr-2">
             {currentMoney.toLocaleString('ru-RU')} {currentUser?.currency ?? '₸'}
           </div>
+          {installPrompt && !isInstalled && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => { installApp(); toast.success('Установка приложения...'); }}
+              className="h-8 w-8 text-emerald-400 hover:text-emerald-300"
+              title="Установить приложение"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          )}
           <ThemeToggle />
           <Button
             variant="ghost"

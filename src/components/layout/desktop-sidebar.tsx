@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Home, ShoppingBag, Calculator, TrendingUp, CreditCard, Clock,
-  User, Shield, LogOut, Wallet, ChevronRight,
+  User, Shield, LogOut, Wallet, ChevronRight, Download,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth-store';
 import { useWalletStore } from '@/stores/wallet-store';
+import { usePwa } from '@/hooks/use-pwa';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -36,6 +37,8 @@ export function DesktopSidebar() {
     toast.success('Вы вышли из аккаунта');
     router.push('/login');
   };
+
+  const { installPrompt, isInstalled, installApp } = usePwa();
 
   const initials = currentUser?.name
     .split(' ')
@@ -118,6 +121,17 @@ export function DesktopSidebar() {
             <p className="text-xs text-muted-foreground truncate">{currentUser?.email}</p>
           </div>
         </div>
+        {installPrompt && !isInstalled && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => { installApp(); toast.success('Установка приложения...'); }}
+            className="w-full justify-start gap-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 mb-1"
+          >
+            <Download className="h-4 w-4" />
+            Установить приложение
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="sm"
