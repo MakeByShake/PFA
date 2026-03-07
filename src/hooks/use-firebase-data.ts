@@ -19,11 +19,19 @@ import type { Goal } from '@/features/goals/types';
 // Converts Firestore goal data (serialized dates) back to Goal with Date objects
 function hydrateGoal(data: Record<string, unknown>): Goal {
   const g = data as unknown as Goal;
+  const toDate = (v: unknown): Date => {
+    if (v instanceof Date) return v;
+    if (v && typeof (v as any).toDate === 'function') return (v as any).toDate();
+    if (typeof v === 'string') return new Date(v);
+    return new Date();
+  };
   return {
     ...g,
-    lastResetAt: g.lastResetAt ? new Date(g.lastResetAt as unknown as string) : new Date(),
-    createdAt: g.createdAt ? new Date(g.createdAt as unknown as string) : new Date(),
-    updatedAt: g.updatedAt ? new Date(g.updatedAt as unknown as string) : new Date(),
+    periodStart: toDate(g.periodStart),
+    periodEnd: toDate(g.periodEnd),
+    lastResetAt: toDate(g.lastResetAt),
+    createdAt: toDate(g.createdAt),
+    updatedAt: toDate(g.updatedAt),
   };
 }
 

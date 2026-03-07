@@ -28,11 +28,14 @@ const uid = () => auth.currentUser?.uid ?? null;
 
 // Goals use Date objects — serialize for Firestore
 function toFirestore(goal: Goal): Record<string, unknown> {
+  const iso = (v: unknown) => v instanceof Date ? v.toISOString() : v;
   return {
     ...goal,
-    lastResetAt: goal.lastResetAt instanceof Date ? goal.lastResetAt.toISOString() : goal.lastResetAt,
-    createdAt: goal.createdAt instanceof Date ? goal.createdAt.toISOString() : goal.createdAt,
-    updatedAt: goal.updatedAt instanceof Date ? goal.updatedAt.toISOString() : goal.updatedAt,
+    periodStart: iso(goal.periodStart),
+    periodEnd: iso(goal.periodEnd),
+    lastResetAt: iso(goal.lastResetAt),
+    createdAt: iso(goal.createdAt),
+    updatedAt: iso(goal.updatedAt),
   };
 }
 

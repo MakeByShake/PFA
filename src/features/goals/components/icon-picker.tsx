@@ -22,6 +22,7 @@ const ALL_ICONS: GoalIconType[] = [
   'sun', 'moon', 'coffee', 'camera', 'plane', 'car',
   'bike', 'pet', 'game', 'trophy', 'target', 'flag',
   'dumbbell', 'brain', 'droplet', 'piggy-bank', 'clock', 'calendar',
+  'settings', 'lotus', 'mail', 'phone',
 ];
 
 export function IconPicker({ value, onChange }: IconPickerProps) {
